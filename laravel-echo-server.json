@@ -1,6 +1,4 @@
 {
-    "authHost": "http://sozluk.test/",
-    "authEndpoint": "/broadcasting/auth",
     "clients": [],
     "database": "redis",
     "databaseConfig": {
