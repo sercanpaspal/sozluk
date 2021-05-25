@@ -14,7 +14,7 @@ class Topic extends Model
     protected $fillable = [
         "title",
         "slug",
-        "user_id",
+        "user_id"
     ];
 
     protected $withCount = ['entries'];
@@ -78,7 +78,10 @@ class Topic extends Model
     {
         return $builder
             ->with(['entry' => function ($q) {
-                $q->orderByRaw('(SELECT COUNT(l.id) FROM likes as l WHERE l.entry_id = entries.id), entries.created_at DESC');
+                $q
+                    ->withCount(['likes'])
+                    ->orderBy('likes_count', 'DESC')
+                    ->orderBy('created_at', 'DESC');
             }]);
     }
 
@@ -87,7 +90,7 @@ class Topic extends Model
         return $builder
             ->has('entry')
             ->withPopularEntry()
-            ->orderByRaw('(entries_count / (SELECT TIMESTAMPDIFF(MINUTE, NOW(), e.created_at) FROM entries as e WHERE e.topic_id = topics.id and e.deleted_at is null ORDER BY e.created_at desc LIMIT 1)) ASC');
+            ->orderBy('entries_count',  'DESC');
     }
 
     public function scopeNewest(Builder $builder)
