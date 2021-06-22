@@ -4,7 +4,9 @@ const io = require('socket.io-client')
 
 export const echo = new Echo({
   broadcaster: 'socket.io',
-  host: window.location.hostname,
+  host:
+    window.location.hostname +
+    (process.env.NODE_ENV === 'development' ? ':6001' : ''),
   client: io,
 })
 

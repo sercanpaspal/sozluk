@@ -29,7 +29,7 @@ const QueryPage = ({ match }) => {
       {loading ? (
         <LoadingSkeleton />
       ) : topic ? (
-        <Topic slug={topic.slug} />
+        <Topic topic={topic} />
       ) : (
         <Box>
           <Heading mb="2">{query}</Heading>
