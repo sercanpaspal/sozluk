@@ -1,0 +1,18 @@
+services:
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '83:80'
+  redis:
+    image: redis:latest
+  laravel-echo-server:
+    image: oanhnn/laravel-echo-server
+    ports:
+     - '6001:6001'
+    environment:
+      - LARAVEL_ECHO_SERVER_DEBUG=true
+networks:
+  default:
+    driver: bridge
