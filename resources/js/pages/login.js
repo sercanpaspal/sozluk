@@ -14,7 +14,7 @@ import { useStore, LOGIN } from '../store'
 
 const LoginPage = (props) => {
   const toast = useToast()
-  const [dispatch] = useStore()
+  const [, dispatch] = useStore()
 
   useEffect(() => {
     document.title = 'Giriş Yap - Sözlük'
