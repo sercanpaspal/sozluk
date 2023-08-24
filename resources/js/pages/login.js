@@ -14,7 +14,7 @@ import { useStore, LOGIN } from '../store'
 
 const LoginPage = (props) => {
   const toast = useToast()
-  const [state, dispatch] = useStore()
+  const [dispatch] = useStore()
 
   useEffect(() => {
     document.title = 'Giriş Yap - Sözlük'
@@ -30,7 +30,7 @@ const LoginPage = (props) => {
           setErrors(errors)
         } else if (message) {
           toast({
-            title: 'Error!',
+            title: 'Hata!',
             description: message,
             status: 'error',
             duration: 9000,
@@ -54,8 +54,7 @@ const LoginPage = (props) => {
           Henüz bir hesabın yok mu?{' '}
           <Button colorScheme="blue" variant="link" as={RouterLink} to="/kayit">
             Kayıt ol
-          </Button>{' '}
-          madem.
+          </Button>
         </Text>
         <Form onSubmit={onSubmit} fields={fields} submitButtonText="Giriş" />
       </Box>

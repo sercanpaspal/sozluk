@@ -24,8 +24,8 @@ const RegisterPage = () => {
     agent.Auth.register(data)
       .then(function (response) {
         toast({
-          title: 'Success!',
-          description: 'Account created!',
+          title: 'Başarılı!',
+          description: 'Hesap oluşturuldu!',
           status: 'success',
           duration: 9000,
           isClosable: true,
@@ -38,7 +38,7 @@ const RegisterPage = () => {
           setErrors(errors)
         } else if (message) {
           toast({
-            title: 'Error!',
+            title: 'Hata!',
             description: message,
             status: 'error',
             duration: 9000,
@@ -69,8 +69,7 @@ const RegisterPage = () => {
           Zaten bir hesabın var mı?{' '}
           <Button colorScheme="blue" variant="link" as={RouterLink} to="/giris">
             Giriş yap
-          </Button>{' '}
-          madem.
+          </Button>
         </Text>
         <Form onSubmit={onSubmit} fields={fields} submitButtonText="Kayıt ol" />
       </Box>
