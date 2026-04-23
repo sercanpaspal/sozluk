@@ -1,25 +1,85 @@
-FROM php:8.0-cli
-
-RUN apt-get update -y && apt-get install -y libmcrypt-dev
-
-ENV COMPOSER_VERSION 2.1.5
-
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=$COMPOSER_VERSION
-
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-
-RUN apt-get install -y nodejs
+FROM composer:2 AS builder
 
 WORKDIR /app
 
-COPY . /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --ignore-platform-reqs
 
-RUN composer install --ignore-platform-reqs
+COPY . .
+RUN composer dump-autoload --optimize
 
-RUN npm install
+FROM node:18 AS nodebuilder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY webpack.mix.js ./
+COPY resources/ ./resources/
+COPY public/ ./public/
 
 RUN npm run prod
 
+FROM php:8.1-fpm-alpine
+
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    curl \
+    zip \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    oniguruma-dev \
+    icu-dev \
+    sqlite-dev \
+    mysql-client \
+    postgresql-dev \
+    linux-headers \
+    bash
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_mysql \
+        pdo_pgsql \
+        pdo_sqlite \
+        gd \
+        zip \
+        mbstring \
+        intl \
+        bcmath \
+        opcache \
+        pcntl
+
+COPY docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY --from=builder /app /var/www/html
+COPY --from=nodebuilder /app/public/js /var/www/html/public/js
+COPY --from=nodebuilder /app/public/css /var/www/html/public/css
+COPY --from=nodebuilder /app/public/mix-manifest.json /var/www/html/public/mix-manifest.json
+
+RUN rm -rf /var/www/html/storage/logs/* \
+    && mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && mkdir -p /var/www/html/storage/framework/cache \
+    && mkdir -p /var/www/html/bootstrap/cache
+
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh \
+    && mkdir -p /run/nginx \
+    && mkdir -p /var/log/supervisor
+
 EXPOSE 80
 
-CMD php artisan serve --host=0.0.0.0 --port=80
+ENTRYPOINT ["/entrypoint.sh"]

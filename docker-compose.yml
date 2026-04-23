@@ -1,18 +1,61 @@
+version: '3.8'
+
 services:
-  laravel:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
-      - '83:80'
-  redis:
-    image: redis:latest
-  laravel-echo-server:
-    image: oanhnn/laravel-echo-server
-    ports:
-     - '6001:6001'
+      - '${APP_PORT:-80}:80'
     environment:
-      - LARAVEL_ECHO_SERVER_DEBUG=true
-networks:
-  default:
-    driver: bridge
+      - APP_ENV=${APP_ENV:-production}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_KEY=${APP_KEY:-}
+      - APP_URL=${APP_URL:-http://localhost}
+      - DB_CONNECTION=${DB_CONNECTION:-sqlite}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-null}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - CACHE_DRIVER=${CACHE_DRIVER:-redis}
+      - SESSION_DRIVER=${SESSION_DRIVER:-redis}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}
+      - BROADCAST_DRIVER=${BROADCAST_DRIVER:-redis}
+    volumes:
+      - app_storage:/var/www/html/storage
+      - app_bootstrap_cache:/var/www/html/bootstrap/cache
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  laravel-echo-server:
+    image: oanhnn/laravel-echo-server:latest
+    restart: unless-stopped
+    ports:
+      - '${ECHO_PORT:-6001}:6001'
+    environment:
+      - LARAVEL_ECHO_SERVER_DEBUG=${ECHO_DEBUG:-false}
+      - LARAVEL_ECHO_SERVER_PORT=6001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PREFIX=sozluk_database_
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  app_storage:
+  app_bootstrap_cache:
+  redis_data:
