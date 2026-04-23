@@ -8,9 +8,11 @@ RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --igno
 COPY . .
 RUN composer dump-autoload --optimize
 
-FROM node:18 AS nodebuilder
+FROM node:16 AS nodebuilder
 
 WORKDIR /app
+
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY package.json package-lock.json ./
 RUN npm ci
