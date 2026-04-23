@@ -11,7 +11,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
-      - APP_KEY=${APP_KEY:-}
       - APP_URL=${APP_URL:-http://localhost}
       - DB_CONNECTION=${DB_CONNECTION:-sqlite}
       - REDIS_HOST=${REDIS_HOST:-redis}

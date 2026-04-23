@@ -8,20 +8,21 @@ RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --igno
 COPY . .
 RUN composer dump-autoload --optimize
 
-FROM node:16 AS nodebuilder
+FROM node:14 AS nodebuilder
 
 WORKDIR /app
-
-ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY webpack.mix.js ./
 COPY resources/ ./resources/
-COPY public/ ./public/
+COPY public/index.php ./public/index.php
 
-RUN npm run prod
+RUN mkdir -p public/css public/js \
+    && sed 's/\.version()//g' webpack.mix.js > webpack.mix.prod.js \
+    && mv webpack.mix.prod.js webpack.mix.js \
+    && npm run prod
 
 FROM php:8.1-fpm-alpine
 
@@ -66,7 +67,7 @@ WORKDIR /var/www/html
 COPY --from=builder /app /var/www/html
 COPY --from=nodebuilder /app/public/js /var/www/html/public/js
 COPY --from=nodebuilder /app/public/css /var/www/html/public/css
-COPY --from=nodebuilder /app/public/mix-manifest.json /var/www/html/public/mix-manifest.json
+RUN echo '{"js/app.js":"/js/app.js","css/app.css":"/css/app.css"}' > /var/www/html/public/mix-manifest.json
 
 RUN rm -rf /var/www/html/storage/logs/* \
     && mkdir -p /var/www/html/storage/framework/sessions \
